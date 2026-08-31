@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Texx-word</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1b1b1f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Texx-word">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1b1b1f;
+  --ink-2:#232329;
+  --ink-3:#2c2c34;
+  --parchment:#f3ead9;
+  --parchment-dim:#e4d6b8;
+  --gold:#d4a537;
+  --gold-bright:#f0c761;
+  --teal:#3d8f89;
+  --teal-dim:#2a615d;
+  --crimson:#b8483d;
+  --text-lo:#9a97a6;
+  --text-hi:#f3ead9;
+  --serif:'Fraunces', Georgia, serif;
+  --sans:'Inter', system-ui, sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;background:var(--ink);color:var(--text-hi);font-family:var(--sans);overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;}
+#app{position:relative;width:100%;height:100%;max-width:520px;margin:0 auto;background:
+  radial-gradient(circle at 50% -10%, #2e2a3d 0%, var(--ink) 55%);
+  overflow:hidden;}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;overflow-y:auto;-ms-overflow-style:none;scrollbar-width:none;}
+.screen::-webkit-scrollbar{display:none;}
+.screen.active{display:flex;}
+
+/* ---------- shared bits ---------- */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 8px;flex-shrink:0;}
+.iconbtn{width:38px;height:38px;border-radius:10px;background:var(--ink-3);border:1px solid #3a3a44;color:var(--text-hi);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.iconbtn:active{transform:scale(0.94);}
+h1,h2,h3{font-family:var(--serif);margin:0;font-weight:600;}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:700;}
+.btn{font-family:var(--sans);font-weight:700;border:none;border-radius:14px;padding:14px 22px;font-size:15px;cursor:pointer;letter-spacing:.02em;}
+.btn-gold{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#2a1f04;box-shadow:0 4px 0 #8a6a1e, 0 8px 18px rgba(212,165,55,.25);}
+.btn-gold:active{transform:translateY(3px);box-shadow:0 1px 0 #8a6a1e;}
+.btn-ghost{background:transparent;border:1.5px solid #4a4a56;color:var(--text-hi);}
+.btn:disabled{opacity:.35;pointer-events:none;}
+
+/* ---------- MENU ---------- */
+#screen-menu{align-items:center;justify-content:center;text-align:center;padding:20px;gap:0;}
+.menu-badge{width:132px;height:132px;border-radius:50%;background:conic-gradient(from 220deg, var(--gold-bright), var(--teal), var(--gold-bright));display:flex;align-items:center;justify-content:center;margin-bottom:22px;box-shadow:0 10px 30px rgba(212,165,55,.2);}
+.menu-badge-inner{width:112px;height:112px;border-radius:50%;background:var(--ink-2);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.menu-badge-inner .lvl{font-family:var(--serif);font-size:30px;font-weight:700;line-height:1;}
+.menu-badge-inner .tier{font-size:10px;color:var(--gold-bright);text-transform:uppercase;letter-spacing:.1em;margin-top:4px;}
+.menu-title{font-size:38px;line-height:1.05;margin-bottom:6px;}
+.menu-sub{color:var(--text-lo);font-size:14px;margin-bottom:34px;max-width:280px;}
+.menu-coins{color:var(--gold-bright);font-weight:700;font-size:14px;margin-bottom:10px;}
+.menu-actions{display:flex;flex-direction:column;gap:12px;width:220px;}
+
+/* ---------- TIERS ---------- */
+.tier-list{padding:4px 16px 24px;display:flex;flex-direction:column;gap:10px;}
+.tier-card{display:flex;align-items:center;gap:14px;padding:14px;border-radius:16px;background:var(--ink-2);border:1px solid #33333c;cursor:pointer;}
+.tier-card.locked{opacity:.4;pointer-events:none;}
+.tier-card.current{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset;}
+.tier-medal{width:46px;height:46px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:700;font-size:15px;color:#2a1f04;}
+.tier-info{flex:1;min-width:0;}
+.tier-name{font-family:var(--serif);font-size:16px;font-weight:600;}
+.tier-range{font-size:11px;color:var(--text-lo);}
+.tier-bar{height:5px;border-radius:3px;background:#3a3a44;margin-top:6px;overflow:hidden;}
+.tier-bar-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--gold-bright));}
+.tier-pct{font-size:12px;color:var(--text-lo);width:36px;text-align:right;flex-shrink:0;}
+
+/* ---------- PACKS ---------- */
+.pack-grid{padding:10px 16px 24px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.pack-card{padding:16px 14px;border-radius:14px;background:var(--ink-2);border:1px solid #33333c;cursor:pointer;}
+.pack-card.locked{opacity:.35;pointer-events:none;}
+.pack-card .p-name{font-family:var(--serif);font-size:15px;font-weight:600;}
+.pack-card .p-range{font-size:11px;color:var(--text-lo);margin-top:2px;}
+.pack-card .tier-bar{margin-top:10px;}
+
+/* ---------- LEVEL GRID ---------- */
+.level-grid{padding:10px 16px 24px;display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+
+/* ---------- SETTINGS ---------- */
+.settings-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;padding:24px 30px 8px;}
+.settings-toggle{display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;}
+.settings-toggle-circle{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;background:radial-gradient(circle at 32% 28%, var(--teal), var(--teal-dim));box-shadow:0 4px 0 rgba(0,0,0,.3), 0 8px 16px rgba(61,143,137,.25);transition:background .15s, box-shadow .15s, opacity .15s;}
+.settings-toggle.off .settings-toggle-circle{background:#3a3a44;box-shadow:0 4px 0 rgba(0,0,0,.3);opacity:.55;}
+.settings-toggle-label{font-size:13px;font-weight:700;color:var(--text-hi);}
+.settings-section{padding:22px 24px 4px;}
+.settings-about{text-align:center;color:var(--text-lo);font-size:11.5px;line-height:1.6;padding:26px 24px;}
+.level-btn{aspect-ratio:1;border-radius:12px;background:var(--ink-3);border:1px solid #3a3a44;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;font-size:14px;cursor:pointer;color:var(--text-hi);position:relative;}
+.level-btn.done{background:linear-gradient(160deg,var(--teal),var(--teal-dim));border-color:var(--teal);}
+.level-btn.current{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold) inset;}
+.level-btn.locked{opacity:.3;pointer-events:none;}
+.level-btn .stars{font-size:8px;color:var(--gold-bright);letter-spacing:1px;margin-top:2px;}
+
+/* ---------- GAME ---------- */
+#screen-game{padding:0;}
+.game-top{display:flex;flex-direction:column;gap:8px;padding:14px 16px 8px;flex-shrink:0;}
+.game-top-row1{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.game-top .lvl-chip{font-family:var(--serif);font-size:15px;font-weight:600;text-align:center;}
+.game-top .tier-chip{font-size:10px;color:var(--gold-bright);text-transform:uppercase;letter-spacing:.08em;text-align:center;}
+.game-top-row3{display:flex;gap:8px;justify-content:flex-end;}
+.progress-wrap{width:100%;flex-shrink:0;}
+.progress-track{height:8px;border-radius:5px;background:#33333c;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--gold-bright));width:0%;transition:width .25s;}
+.progress-label{font-size:10.5px;color:var(--text-lo);margin-top:3px;}
+.bonus-chip{background:var(--ink-3);border-radius:10px;padding:6px 9px;font-size:11.5px;font-weight:700;color:var(--gold-bright);white-space:nowrap;}
+.score-chip{color:var(--parchment);}
+
+.grid-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:6px 10px;min-height:0;overflow:auto;}
+#crossgrid{display:grid;gap:5px;}
+.cell{width:34px;height:34px;border-radius:6px;position:relative;}
+.cell.empty{background:transparent;}
+.cell.tile{background:var(--parchment-dim);border:1px solid #cbb98f;}
+.cell.tile.found{background:var(--parchment);border-color:var(--gold);}
+.cell.tile .letter{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:700;font-size:16px;color:#2a1f04;opacity:0;transform:scale(.5);transition:opacity .18s, transform .18s;}
+.cell.tile.found .letter{opacity:1;transform:scale(1);}
+
+.toast{position:absolute;left:50%;top:38%;transform:translate(-50%,0);background:var(--ink-3);border:1px solid var(--gold);padding:8px 16px;border-radius:20px;font-weight:700;font-size:13px;opacity:0;pointer-events:none;transition:opacity .15s, transform .15s;z-index:20;}
+.toast.show{opacity:1;transform:translate(-50%,-8px);}
+
+.bonus-strip{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:2px 16px 4px;min-height:14px;flex-shrink:0;}
+.bonus-word-chip{font-size:10.5px;background:var(--ink-3);color:var(--text-lo);padding:3px 8px;border-radius:8px;letter-spacing:.03em;}
+
+.wheel-area{flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding:6px 10px 22px;gap:12px;}
+.current-word{height:30px;font-family:var(--serif);font-size:22px;font-weight:700;letter-spacing:.08em;color:var(--gold-bright);}
+.wheel-box{position:relative;width:250px;height:250px;}
+.wheel-box svg{position:absolute;inset:0;pointer-events:none;}
+.wheel-letter{position:absolute;width:58px;height:58px;border-radius:50%;background:radial-gradient(circle at 32% 28%, #3a3a44, var(--ink-3));border:1.5px solid #4a4a56;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:22px;font-weight:700;color:var(--text-hi);transform:translate(-50%,-50%);touch-action:none;cursor:pointer;}
+.wheel-letter.sel{background:radial-gradient(circle at 32% 28%, var(--gold-bright), var(--gold));color:#2a1f04;border-color:var(--gold-bright);}
+.wheel-actions{display:flex;gap:10px;}
+.wheel-actions .btn{padding:10px 18px;font-size:13px;}
+
+/* ---------- COMPLETE OVERLAY ---------- */
+#overlay-complete{position:absolute;inset:0;background:rgba(15,15,18,.88);display:none;align-items:center;justify-content:center;z-index:50;padding:24px;}
+#overlay-complete.show{display:flex;}
+.complete-card{background:var(--ink-2);border:1px solid var(--gold);border-radius:22px;padding:32px 26px;text-align:center;max-width:320px;width:100%;}
+.stars-row{font-size:34px;letter-spacing:8px;margin:14px 0;color:#4a4a56;}
+.stars-row .lit{color:var(--gold-bright);}
+.complete-stats{color:var(--text-lo);font-size:13px;margin-bottom:22px;}
+.complete-actions{display:flex;flex-direction:column;gap:10px;}
+
+/* ---------- ADS ---------- */
+.ad-overlay{position:absolute;inset:0;background:rgba(10,10,12,.94);display:none;align-items:center;justify-content:center;z-index:70;padding:24px;}
+.ad-overlay.show{display:flex;}
+.ad-card{background:var(--ink-2);border:1px solid #3a3a44;border-radius:22px;padding:28px 24px;text-align:center;max-width:320px;width:100%;}
+.ad-label{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-lo);border:1px solid #3a3a44;display:inline-block;padding:3px 10px;border-radius:8px;margin-bottom:18px;}
+.ad-creative{padding:18px 6px 22px;}
+.ad-creative-icon{font-size:40px;margin-bottom:10px;}
+.ad-creative-title{font-family:var(--serif);font-size:19px;font-weight:700;margin-bottom:6px;}
+.ad-creative-sub{color:var(--text-lo);font-size:13px;line-height:1.5;}
+.ad-timer{color:var(--gold-bright);font-size:13px;font-weight:700;margin-bottom:16px;}
+
+#banner-ad-slot{position:absolute;left:0;right:0;bottom:0;height:44px;background:var(--ink-2);border-top:1px solid #3a3a44;display:none;align-items:center;justify-content:center;gap:8px;z-index:40;}
+#app.ads-online #banner-ad-slot{display:flex;}
+.banner-ad-label{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:var(--gold-bright);padding:2px 6px;border-radius:4px;font-weight:800;}
+.banner-ad-text{font-size:11.5px;color:var(--text-lo);}
+#app.ads-online .screen{padding-bottom:44px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- MENU -->
+  <div class="screen active" id="screen-menu">
+    <div class="iconbtn" onclick="openSettings()" style="position:absolute;top:18px;right:18px;">&#9881;</div>
+    <div class="menu-badge"><div class="menu-badge-inner">
+      <div class="lvl" id="menu-level">1</div>
+      <div class="tier" id="menu-tier">Novice</div>
+    </div></div>
+    <div class="menu-title">Texx-word</div>
+    <div class="menu-coins">&#129689; <span id="menu-coins">0</span> coins</div>
+    <div class="menu-sub">Swipe letters to cast words and fill the crossword.</div>
+    <div class="menu-actions">
+      <button class="btn btn-gold" onclick="startCurrentLevel()">Play Level <span id="menu-play-level">1</span></button>
+      <button class="btn btn-ghost" onclick="openTiers()">Choose a Rank</button>
+      <button class="btn btn-ghost" id="daily-btn" onclick="startDailyChallenge()">&#127775; Daily Challenge</button>
+    </div>
+  </div>
+
+  <!-- TIERS -->
+  <div class="screen" id="screen-tiers">
+    <div class="topbar">
+      <div class="iconbtn" onclick="showScreen('screen-menu')">&#8592;</div>
+      <div><div class="eyebrow">Ranks</div><h2>Choose your Rank</h2></div>
+      <div style="width:38px"></div>
+    </div>
+    <div class="tier-list" id="tier-list"></div>
+  </div>
+
+  <!-- PACKS -->
+  <div class="screen" id="screen-packs">
+    <div class="topbar">
+      <div class="iconbtn" onclick="showScreen('screen-tiers')">&#8592;</div>
+      <div><div class="eyebrow" id="pack-eyebrow">Rank</div><h2 id="pack-title">Novice</h2></div>
+      <div style="width:38px"></div>
+    </div>
+    <div class="pack-grid" id="pack-grid"></div>
+  </div>
+
+  <!-- LEVELS -->
+  <div class="screen" id="screen-levels">
+    <div class="topbar">
+      <div class="iconbtn" onclick="showScreen('screen-packs')">&#8592;</div>
+      <div><div class="eyebrow" id="levels-eyebrow">Pack</div><h2 id="levels-title">Levels 1–100</h2></div>
+      <div style="width:38px"></div>
+    </div>
+    <div class="level-grid" id="level-grid"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="screen" id="screen-settings">
+    <div class="topbar">
+      <div class="iconbtn" onclick="showScreen('screen-menu')">&#8592;</div>
+      <div><div class="eyebrow">Options</div><h2>Settings</h2></div>
+      <div style="width:38px"></div>
+    </div>
+    <div class="settings-grid">
+      <div class="settings-toggle" id="settings-music" onclick="toggleMusic()">
+        <div class="settings-toggle-circle">&#127925;</div>
+        <div class="settings-toggle-label">Music</div>
+      </div>
+      <div class="settings-toggle" id="settings-sound" onclick="toggleSfx()">
+        <div class="settings-toggle-circle">&#128266;</div>
+        <div class="settings-toggle-label">Sound</div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <button class="btn btn-ghost" onclick="resetProgressConfirm()">Reset Progress</button>
+    </div>
+    <div class="settings-about">Texx-word · 20,000 levels · 20 ranks</div>
+  </div>
+
+  <!-- GAME -->
+  <div class="screen" id="screen-game">
+    <div class="game-top">
+      <div class="game-top-row1">
+        <div class="iconbtn" onclick="exitGame()">&#8592;</div>
+        <div style="flex-shrink:0">
+          <div class="lvl-chip">Level <span id="game-level">1</span></div>
+          <div class="tier-chip" id="game-tier">Novice</div>
+        </div>
+        <div style="width:38px"></div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="progress-label"><span id="progress-label">0/0 words</span></div>
+      </div>
+      <div class="game-top-row3">
+        <div class="bonus-chip score-chip">&#129689; <span id="score-count">0</span> coins</div>
+        <div class="bonus-chip">+<span id="bonus-count">0</span> bonus</div>
+      </div>
+    </div>
+    <div class="grid-wrap"><div id="crossgrid"></div></div>
+    <div class="bonus-strip" id="bonus-strip"></div>
+    <div class="wheel-area">
+      <div class="current-word" id="current-word"></div>
+      <div class="wheel-box" id="wheel-box">
+        <svg id="wheel-svg" viewBox="0 0 250 250"></svg>
+      </div>
+      <div class="wheel-actions">
+        <button class="btn btn-ghost" onclick="shuffleWheel()">&#8635; Shuffle</button>
+        <button class="btn btn-ghost" id="hint-btn" onclick="useHint()">&#128161; Hint (1)</button>
+      </div>
+    </div>
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <!-- COMPLETE OVERLAY -->
+  <div id="overlay-complete">
+    <div class="complete-card">
+      <div class="eyebrow">Level Cleared</div>
+      <h2 id="complete-title">Level 1</h2>
+      <div class="stars-row" id="complete-stars">&#9733;&#9733;&#9733;</div>
+      <div class="complete-stats" id="complete-stats">8/8 words · 3 bonus words</div>
+      <div class="complete-actions">
+        <button class="btn btn-gold" id="complete-primary-btn" onclick="nextLevel()">Next Level</button>
+        <button class="btn btn-ghost" id="complete-secondary-btn" onclick="closeCompleteToSelect()">Level Select</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INTERSTITIAL AD (every 2 completed rounds) -->
+  <div id="overlay-interstitial-ad" class="ad-overlay">
+    <div class="ad-card">
+      <div class="ad-label">Advertisement</div>
+      <div class="ad-creative">
+        <div class="ad-creative-icon">&#127942;</div>
+        <div class="ad-creative-title">Texx-word</div>
+        <div class="ad-creative-sub">Enjoying the game? A short break, then back to your ranks.</div>
+      </div>
+      <div class="ad-timer" id="interstitial-timer">Ad ends in 5s</div>
+      <button class="btn btn-gold" id="interstitial-close-btn" onclick="closeInterstitialAd()" style="display:none;">Continue</button>
+    </div>
+  </div>
+
+  <!-- REWARDED AD (watch to earn a hint) -->
+  <div id="overlay-rewarded-ad" class="ad-overlay">
+    <div class="ad-card">
+      <div class="ad-label">Advertisement &middot; Rewarded</div>
+      <div class="ad-creative">
+        <div class="ad-creative-icon">&#128161;</div>
+        <div class="ad-creative-title">Watching for 1 Hint</div>
+        <div class="ad-creative-sub">Stay on this screen to unlock a free hint.</div>
+      </div>
+      <div class="ad-timer" id="rewarded-timer">5s remaining</div>
+      <button class="btn btn-gold" id="rewarded-claim-btn" onclick="claimRewardedAd()" style="display:none;">Claim Hint</button>
+    </div>
+  </div>
+
+  <!-- PERSISTENT BANNER AD SLOT -->
+  <div id="banner-ad-slot">
+    <span class="banner-ad-label">Ad</span>
+    <span class="banner-ad-text">Texx-word &middot; place your ad unit here</span>
+  </div>
+
+</div>
+<script>
+const WORD_LIST = ["abide", "able", "abode", "about", "above", "absurd", "abuse", "ache", "acid", "acorn", "acre", "act", "actor", "acute", "adapt", "add", "adhere", "admit", "ado", "adopt", "adorn", "adult", "adventure", "after", "afternoon", "again", "age", "aged", "agent", "ago", "agree", "ahead", "aid", "ail", "aim", "air", "airplane", "akin", "alarm", "album", "ale", "alert", "alien", "alike", "alive", "all", "allow", "ally", "alms", "aloe", "alone", "along", "aloud", "alphabet", "also", "alter", "alto", "amid", "among", "amps", "amuse", "and", "angel", "anger", "angle", "angry", "animal", "answer", "ant", "anti", "any", "apart", "ape", "apple", "apply", "apt", "arc", "arch", "are", "area", "arena", "argue", "arise", "ark", "arm", "armor", "army", "aroma", "array", "arrow", "art", "ash", "aside", "ask", "asset", "asteroid", "astronaut", "ate", "atlas", "atom", "attention", "audio", "audit", "aunt", "autumn", "avail", "avalanche", "avoid", "awake", "award", "aware", "away", "awe", "awful", "axe", "axle", "babe", "back", "bacon", "bad", "badge", "bag", "bail", "bait", "bake", "baker", "bald", "bale", "ball", "balm", "ban", "banana", "band", "bane", "bang", "bank", "banner", "bar", "bare", "bark", "barn", "base", "bash", "basic", "basin", "basis", "basket", "bass", "bat", "batch", "bath", "bathroom", "batter", "bawl", "bay", "beach", "bead", "beak", "beam", "bean", "bear", "beard", "beast", "beat", "bed", "bedroom", "bee", "beef", "been", "beer", "beet", "beg", "begin", "being", "bell", "belly", "below", "belt", "bench", "bend", "bent", "berry", "best", "bet", "better", "bib", "bicycle", "bid", "bide", "big", "bike", "bile", "bilk", "bill", "bin", "bind", "biology", "bird", "birth", "birthday", "bit", "bite", "blab", "black", "blade", "blame", "bland", "blank", "blanket", "blast", "blaze", "bleed", "blend", "bless", "blind", "blip", "blister", "blob", "bloc", "block", "blood", "bloom", "blot", "blouse", "blow", "blue", "blur", "boa", "boar", "board", "boast", "boat", "bob", "body", "bog", "boil", "bola", "bold", "bolt", "bomb", "bond", "bone", "bonus", "book", "boom", "boon", "boor", "boost", "boot", "booth", "bop", "border", "bore", "born", "boss", "both", "bottle", "bound", "bout", "bow", "bowl", "box", "boxing", "boxy", "boy", "bra", "brace", "brag", "brain", "brake", "bran", "branch", "brand", "brane", "bras", "brass", "brat", "brave", "bray", "bread", "break", "breed", "brew", "brick", "bride", "bridge", "brief", "bright", "brim", "bring", "broad", "broke", "broken", "brook", "broom", "brother", "brow", "brown", "brush", "buck", "bucket", "bud", "buds", "bug", "build", "built", "bulb", "bulk", "bull", "bum", "bump", "bun", "bunch", "bundle", "bunk", "buoy", "burden", "burn", "burning", "burst", "bus", "bush", "business", "bust", "busy", "but", "butterfly", "button", "buy", "cab", "cabin", "cabinet", "cable", "cage", "cake", "calendar", "call", "calm", "came", "camp", "can", "candle", "candy", "cane", "canon", "canyon", "cap", "cape", "caper", "capture", "car", "caramel", "card", "care", "cargo", "carnival", "carp", "carpet", "carry", "cart", "case", "cash", "cast", "cat", "catch", "cater", "cattle", "cause", "cave", "caw", "cease", "cedar", "ceiling", "cell", "cereal", "ceremony", "chain", "chair", "chalk", "champ", "chance", "change", "chant", "chaos", "chap", "char", "charm", "chart", "chase", "chat", "cheap", "cheat", "check", "cheek", "cheer", "chef", "chemistry", "cherry", "chess", "chest", "chew", "chic", "chicken", "chief", "child", "chill", "chime", "chin", "chip", "chocolate", "choir", "choke", "chop", "chord", "chose", "chosen", "chow", "chuck", "chum", "circle", "cite", "city", "civil", "clad", "claim", "clam", "clamp", "clan", "clap", "clash", "class", "classroom", "claw", "clay", "clean", "clear", "clerk", "click", "cliff", "climb", "cling", "clip", "clock", "clog", "close", "cloth", "cloud", "clown", "club", "cluck", "clue", "coach", "coal", "coast", "coat", "coax", "cob", "cock", "coco", "cod", "coda", "code", "cog", "coil", "coin", "coke", "cola", "cold", "collar", "college", "color", "colt", "column", "comb", "combine", "combo", "come", "comedy", "comet", "comic", "computer", "con", "cone", "cook", "cool", "coop", "cop", "cope", "copy", "cord", "core", "cork", "corn", "corner", "cost", "cosy", "cot", "cotton", "could", "count", "country", "coup", "court", "cove", "cover", "cow", "coy", "crab", "crack", "craft", "crag", "cram", "cramp", "crane", "crap", "crash", "crate", "crater", "craw", "crawl", "crazy", "cream", "creature", "creep", "crest", "crib", "cricket", "crime", "crisp", "crock", "crocodile", "crop", "cross", "crow", "crowd", "crown", "crud", "crude", "cruel", "crumb", "crush", "crux", "cry", "cub", "cud", "cue", "culture", "cup", "cur", "curb", "curd", "cure", "curious", "curl", "curse", "curt", "curtain", "curve", "cut", "cute", "cycle", "cyst", "dab", "dad", "daily", "dairy", "dale", "dam", "dame", "damp", "dance", "dancer", "dandy", "danger", "dap", "dare", "dark", "darn", "dart", "dash", "data", "date", "daughter", "dawn", "day", "days", "dead", "deaf", "deal", "dealt", "dean", "dear", "death", "debt", "debut", "decay", "deck", "deed", "deem", "deep", "deer", "define", "defy", "delay", "dell", "demand", "demo", "democracy", "den", "dense", "dent", "deny", "depth", "desert", "desk", "detail", "dew", "dial", "dialect", "diary", "dib", "dice", "dick", "did", "die", "died", "diet", "dig", "digestion", "digit", "dill", "dim", "dime", "din", "dine", "dinner", "dinosaur", "dint", "dip", "dirty", "disc", "discovery", "dish", "ditch", "dive", "dizzy", "doc", "dock", "doctor", "dodo", "doe", "does", "doff", "dog", "dole", "doll", "dollar", "dome", "don", "done", "donor", "doom", "door", "dope", "dose", "dot", "dote", "doubt", "dough", "dove", "down", "doze", "dozen", "drab", "draft", "drag", "dragon", "dragonfly", "drain", "drake", "drama", "drank", "drat", "draw", "drawn", "dread", "dream", "dress", "drew", "drift", "drill", "drink", "drip", "drive", "drizzle", "drone", "drop", "drove", "drown", "drug", "drum", "drunk", "dry", "dual", "dub", "duck", "dud", "dude", "due", "duel", "dug", "dull", "duly", "dumb", "dump", "dun", "dune", "dupe", "dusk", "dust", "duty", "dwell", "dye", "each", "eager", "ear", "earl", "early", "earn", "ears", "earth", "ease", "easel", "east", "easy", "eaten", "eats", "ebb", "ebony", "echo", "economy", "edge", "edged", "edgy", "edit", "eel", "eels", "egg", "ego", "eight", "eked", "elbow", "elder", "elect", "election", "elephant", "elf", "elite", "elk", "elm", "emit", "empty", "enact", "end", "endow", "enemy", "energy", "engine", "enjoy", "enter", "entry", "envoy", "envy", "epic", "equal", "equip", "era", "erase", "erect", "error", "essay", "eve", "even", "evening", "event", "ever", "every", "evil", "ewe", "exact", "exam", "example", "excel", "exist", "exit", "expand", "expo", "extra", "eye", "eyed", "fable", "face", "fact", "factory", "fad", "fade", "fail", "faint", "fair", "fairy", "faith", "fake", "fall", "false", "fame", "family", "famous", "fan", "fancy", "fang", "fantasy", "far", "fare", "farm", "farmer", "fast", "fat", "fate", "father", "fatter", "fault", "favor", "fax", "fear", "feast", "feat", "feather", "feature", "fed", "fee", "feed", "feel", "fees", "feet", "fell", "felt", "fen", "fence", "fend", "fern", "ferry", "festival", "fetch", "feud", "fever", "few", "fib", "fiber", "field", "fiend", "fifth", "fifty", "fig", "fight", "figs", "file", "fill", "film", "fin", "final", "find", "fine", "finger", "fink", "fir", "fire", "firm", "first", "fish", "fist", "fit", "five", "fix", "fixed", "fixture", "flag", "flair", "flake", "flame", "flap", "flare", "flash", "flat", "flaw", "flea", "fled", "flee", "fleet", "flesh", "flew", "flex", "flick", "flies", "flight", "fling", "flip", "flit", "float", "flock", "flog", "flood", "floor", "flop", "floppy", "flora", "flour", "flow", "flower", "flown", "flu", "flue", "fluid", "flush", "flute", "fly", "foam", "focal", "focus", "foe", "fog", "foggy", "foil", "fold", "folk", "folly", "fond", "font", "food", "fool", "foot", "fop", "for", "force", "ford", "forest", "forge", "fork", "form", "fort", "forth", "forty", "forum", "foul", "found", "fountain", "four", "fowl", "fox", "foxy", "foy", "frame", "fraud", "free", "fresh", "fret", "fridge", "fried", "fright", "frock", "frog", "from", "front", "frost", "frown", "frozen", "fruit", "fry", "fudge", "fuel", "full", "fully", "fume", "fumes", "fun", "fund", "funk", "funny", "fur", "fuse", "fuss", "fussy", "future", "fuzz", "gab", "gable", "gaff", "gag", "gail", "gain", "gal", "gala", "galaxy", "gale", "gall", "game", "games", "gang", "gap", "gape", "gaps", "garb", "garden", "gas", "gash", "gasp", "gate", "gauge", "gaze", "gear", "gel", "gem", "gems", "gene", "genre", "geography", "geometry", "germ", "gesture", "get", "ghee", "ghost", "giant", "gift", "gig", "gild", "gin", "giraffe", "girl", "gist", "give", "given", "glacier", "glad", "glance", "glare", "glass", "gleam", "glee", "glen", "glide", "globe", "gloom", "glory", "glove", "glow", "glue", "glum", "glut", "gnu", "goad", "goal", "goat", "gob", "god", "gods", "goes", "going", "gold", "golf", "gone", "gong", "good", "gore", "gory", "gosh", "got", "gout", "gown", "grab", "grace", "grade", "grain", "grammar", "gran", "grand", "grant", "grape", "graph", "grasp", "grass", "grate", "grater", "grave", "gravel", "gravy", "gray", "great", "greed", "green", "greet", "grid", "grief", "grill", "grim", "grime", "grin", "grind", "grip", "grit", "groan", "groom", "group", "grove", "grow", "grown", "grub", "grump", "grunt", "guard", "guess", "guest", "guide", "guitar", "gulf", "gull", "gulp", "gulps", "gum", "gun", "gush", "gust", "gut", "guts", "guy", "gym", "gyms", "habit", "had", "hail", "hair", "half", "hall", "hallway", "halo", "halt", "ham", "hammer", "hand", "handle", "hang", "happen", "happy", "hard", "harden", "hare", "harm", "harp", "harsh", "hart", "has", "hash", "haste", "hat", "hate", "hater", "haul", "have", "haven", "haw", "hawk", "hay", "haze", "hazy", "head", "heal", "heap", "hear", "heart", "heat", "heather", "heavy", "hedge", "heed", "heel", "heir", "held", "hell", "hello", "helm", "help", "hen", "hence", "her", "herb", "herbs", "herd", "here", "hero", "hers", "hew", "hex", "hey", "hid", "hide", "high", "hike", "hill", "him", "hind", "hinge", "hint", "hip", "hire", "his", "hiss", "history", "hit", "hive", "hoard", "hoax", "hob", "hobby", "hobs", "hock", "hockey", "hog", "hoist", "hold", "hole", "holiday", "holy", "home", "hone", "honest", "honey", "honor", "hood", "hoof", "hook", "hoop", "hoot", "hop", "hope", "hops", "horde", "horn", "horse", "hose", "host", "hot", "hotel", "hound", "hour", "house", "hover", "how", "hub", "hue", "hued", "hug", "huge", "hugs", "hulk", "hull", "hum", "human", "humor", "hump", "hungry", "hunk", "hunt", "hurl", "hurricane", "hurry", "hurt", "hush", "husk", "hut", "hymn", "hype", "ice", "icky", "icon", "idea", "ideal", "idle", "idol", "ill", "image", "imp", "imply", "inbox", "inch", "index", "industry", "inept", "inert", "infer", "info", "ingot", "ink", "inks", "inky", "inlay", "inn", "inner", "input", "insect", "intention", "interest", "into", "invention", "ion", "iris", "irk", "iron", "ironic", "irony", "islam", "island", "issue", "item", "its", "ivory", "ivy", "jab", "jacket", "jade", "jail", "jam", "jams", "jar", "jars", "java", "jaw", "jaws", "jay", "jazz", "jealous", "jean", "jeep", "jeer", "jelly", "jest", "jet", "jets", "jewel", "jig", "job", "jock", "jog", "join", "joint", "joke", "joker", "jolt", "jot", "joust", "jowl", "joy", "joys", "judge", "judo", "jug", "juice", "jumbo", "jump", "jungle", "junk", "junky", "jury", "just", "justice", "jut", "kale", "kangaroo", "karma", "kayak", "keel", "keen", "keep", "keg", "kelp", "ken", "kept", "kettle", "key", "keyboard", "keys", "kick", "kid", "kids", "kiln", "kilt", "kin", "kind", "kine", "king", "kiss", "kit", "kitchen", "kite", "kits", "knee", "kneel", "knew", "knife", "knit", "knob", "knock", "knot", "know", "known", "lab", "label", "labor", "lace", "lack", "lacy", "lad", "laden", "lady", "ladybug", "lag", "laid", "lair", "lake", "lamb", "lame", "lamp", "lance", "land", "lane", "language", "lap", "laps", "lard", "large", "lark", "laser", "lash", "last", "late", "later", "latter", "laugh", "laundry", "lava", "law", "lawn", "lawyer", "lax", "lay", "layer", "lays", "lazy", "lea", "lead", "leaf", "leak", "lean", "leap", "learn", "learner", "learning", "lease", "least", "leather", "led", "ledge", "leg", "legal", "lemon", "lens", "lent", "less", "lesson", "lest", "let", "letter", "level", "levy", "liar", "lice", "lick", "lid", "lids", "lie", "lied", "lien", "lieu", "life", "lift", "light", "like", "liken", "lily", "limb", "lime", "limit", "limp", "line", "linen", "liner", "linger", "link", "lint", "lion", "lions", "lip", "lips", "list", "lit", "little", "live", "load", "loaf", "loan", "lobe", "location", "loch", "lock", "loft", "log", "logic", "logo", "loin", "lone", "long", "look", "loom", "loop", "loose", "loot", "lop", "lord", "lore", "lose", "loss", "lost", "lot", "loud", "louse", "lout", "love", "lover", "low", "lower", "lox", "loyal", "lucid", "luck", "lug", "lull", "lump", "lunar", "lunch", "lung", "lungs", "lure", "lurk", "lush", "lust", "lute", "lying", "lynx", "lyric", "mace", "mad", "made", "magazine", "magic", "magnet", "mail", "main", "mair", "maize", "major", "make", "maker", "male", "mall", "malt", "mammal", "man", "mane", "mange", "mango", "manner", "many", "map", "maple", "maps", "mar", "march", "mare", "mark", "market", "marrow", "marry", "marsh", "mart", "mash", "mask", "mass", "mast", "mat", "mate", "mater", "math", "matter", "mattress", "maw", "may", "maybe", "mayor", "maze", "mead", "meal", "mean", "meant", "meat", "medal", "media", "meek", "meet", "melon", "melt", "memo", "men", "mend", "mention", "menu", "mercy", "mere", "merge", "merit", "merry", "mesh", "mess", "message", "met", "metal", "meteor", "meter", "mice", "mid", "midst", "might", "mild", "mile", "milk", "mill", "mimic", "mind", "mine", "minor", "mint", "minus", "mirror", "misery", "mist", "mister", "mix", "mixed", "mixture", "mob", "mock", "mod", "mode", "model", "modest", "mogul", "mold", "mole", "mom", "money", "monitor", "monk", "monkey", "month", "mood", "moody", "moon", "moor", "moot", "mop", "moral", "more", "morn", "morning", "moss", "most", "moth", "mother", "motor", "mound", "mount", "mountain", "mourn", "mouse", "mouth", "move", "moved", "movie", "mow", "mown", "much", "muck", "mucky", "mud", "mug", "mule", "mum", "mush", "music", "must", "mute", "mutton", "muzzle", "mystery", "myth", "myths", "nab", "nag", "nail", "naive", "name", "nap", "nape", "narrow", "nasty", "nation", "nature", "naval", "navy", "nay", "near", "neat", "nebula", "neck", "need", "needy", "neon", "nerd", "nerve", "nervous", "nest", "net", "never", "new", "newly", "news", "newspaper", "next", "nib", "nice", "nick", "night", "nil", "nine", "ninth", "nip", "nit", "noble", "nod", "node", "noise", "none", "nook", "noon", "nor", "norm", "north", "nose", "not", "note", "notebook", "noted", "notice", "noun", "novel", "now", "nozzle", "nub", "nude", "nudge", "numb", "nun", "nurse", "nut", "nuts", "nylon", "oak", "oaks", "oar", "oasis", "oat", "oath", "oats", "obese", "obey", "occur", "ocean", "octopus", "odd", "odds", "ode", "off", "offer", "office", "oft", "often", "oil", "oily", "okay", "okra", "old", "olive", "omelette", "omen", "once", "one", "ones", "onion", "only", "onto", "onus", "ooze", "open", "opera", "oral", "orange", "orb", "orbit", "order", "ore", "organ", "other", "otter", "ouch", "ought", "ounce", "our", "ours", "oust", "out", "outer", "oval", "ovation", "oven", "over", "overt", "owe", "owed", "owes", "owl", "owls", "own", "owner", "oxide", "pace", "pack", "pact", "pad", "page", "paid", "pail", "pain", "paint", "painter", "painting", "pair", "pal", "pale", "pall", "palm", "pan", "pancake", "pane", "panel", "pang", "panic", "pans", "pant", "pantry", "paper", "par", "paragraph", "pardon", "park", "parks", "part", "party", "pass", "past", "pasta", "pasture", "pat", "patch", "path", "patience", "pause", "pave", "paw", "pawn", "pay", "pea", "peace", "peach", "peak", "peal", "pear", "pearl", "peat", "peck", "peel", "peep", "peer", "peg", "pelt", "pen", "pencil", "pens", "people", "pep", "per", "pere", "perk", "pest", "pet", "petal", "pets", "pew", "phase", "piano", "pick", "picture", "pie", "piece", "pier", "pig", "pike", "pile", "pill", "pillow", "pilot", "pin", "pinch", "pine", "pink", "pint", "pipe", "pit", "pitch", "pity", "pixel", "pizza", "place", "plain", "plan", "plane", "planet", "plant", "plate", "play", "plaza", "plea", "plead", "pleat", "plight", "plod", "plop", "plot", "plow", "ploy", "pluck", "plug", "plum", "plumb", "plump", "plus", "plush", "ply", "pock", "pocket", "pod", "poems", "poet", "point", "poise", "poison", "poke", "poker", "polar", "pole", "polio", "poll", "pomp", "pond", "ponds", "pony", "poof", "pool", "poor", "pop", "pope", "poppy", "porch", "pore", "pork", "port", "pose", "poser", "posture", "posy", "pot", "potation", "pouch", "pound", "pour", "pout", "power", "practice", "prairie", "prat", "pray", "preacher", "preen", "president", "press", "prey", "price", "pride", "pried", "prime", "print", "printer", "prior", "prison", "prize", "pro", "probe", "prod", "prom", "promo", "prone", "proof", "prop", "protest", "proud", "prove", "prow", "prowl", "pry", "pub", "puck", "pud", "puff", "pug", "pull", "pulp", "pulse", "puma", "pump", "pun", "punch", "punk", "punt", "puny", "pup", "pupil", "puppy", "pure", "purple", "purse", "push", "put", "putt", "puzzle", "quad", "quaint", "quake", "quay", "queen", "query", "quest", "question", "quick", "quid", "quiet", "quilt", "quip", "quirk", "quit", "quiz", "quota", "quote", "rabbi", "rabbit", "race", "racer", "rack", "racket", "radar", "radio", "raft", "rag", "rage", "raid", "rail", "rain", "raincoat", "raise", "rake", "rally", "ram", "ramp", "ran", "ranch", "rang", "range", "rank", "rant", "rap", "rapid", "rare", "rash", "rat", "rate", "ratio", "ration", "rats", "rave", "raw", "ray", "raze", "razor", "reach", "react", "read", "ready", "real", "realm", "ream", "reap", "rear", "reason", "rebel", "red", "reed", "reef", "reel", "refer", "reign", "rein", "relax", "rely", "remedy", "rend", "rent", "reply", "reptile", "reset", "resin", "rest", "retro", "revel", "reward", "rhyme", "rib", "rice", "rich", "rid", "ride", "rider", "ridge", "rife", "rifle", "rift", "rig", "right", "rigid", "rill", "rim", "rime", "rind", "ring", "ringer", "rink", "riot", "rip", "ripe", "rise", "risen", "risk", "risky", "rite", "rival", "river", "road", "roam", "roar", "roast", "rob", "robe", "robot", "rock", "rocket", "rocky", "rod", "rode", "roe", "rogue", "role", "roll", "roman", "roof", "rook", "room", "root", "rope", "rose", "rosy", "rot", "rota", "rote", "rotten", "rough", "round", "rouse", "rout", "route", "rove", "row", "rowdy", "rows", "roy", "royal", "rub", "ruby", "rude", "rue", "rued", "rug", "rugby", "ruin", "rule", "ruler", "rum", "rumor", "rump", "run", "runs", "runt", "rural", "ruse", "rush", "rust", "rusty", "rut", "ruts", "rye", "sac", "sack", "sad", "sadly", "safe", "safer", "sag", "saga", "sage", "sail", "saint", "sake", "salad", "sale", "sales", "salon", "salsa", "salt", "salty", "same", "sample", "sand", "sandwich", "sandy", "sane", "sank", "sap", "sash", "sat", "satellite", "sauce", "sauna", "save", "saw", "saws", "say", "scale", "scalp", "scamp", "scan", "scant", "scar", "scare", "scarf", "scary", "scat", "scene", "scent", "scholar", "science", "scientist", "scoff", "scold", "scoop", "scope", "score", "scot", "scout", "scow", "scrap", "screen", "screw", "sculpture", "scum", "sea", "seal", "seam", "sear", "seas", "season", "seat", "sect", "see", "seed", "seedy", "seek", "seem", "seen", "seep", "seize", "self", "sell", "senator", "send", "sense", "sent", "sentence", "sept", "sere", "serious", "serve", "service", "set", "sets", "settle", "setup", "seven", "sew", "sewn", "shack", "shad", "shade", "shadow", "shady", "shaft", "shah", "shake", "shall", "sham", "shame", "shank", "shape", "shard", "share", "shark", "sharp", "shave", "shear", "shed", "sheen", "sheep", "sheer", "sheet", "shelf", "shell", "shied", "shift", "shin", "shine", "shiny", "ship", "shirt", "shoal", "shock", "shod", "shoe", "shone", "shoo", "shoot", "shop", "shore", "shorn", "short", "shot", "shout", "shove", "show", "shown", "shred", "shrub", "shrug", "shun", "shut", "shy", "sick", "side", "siege", "sift", "sigh", "sight", "sigma", "sign", "silence", "silk", "silky", "sill", "silly", "silo", "silt", "simple", "sin", "since", "sine", "sing", "singer", "sink", "sip", "sir", "sire", "sister", "sit", "site", "six", "sixth", "sixty", "size", "sizzle", "skate", "skater", "ski", "skid", "skin", "skip", "skirt", "skit", "skua", "skull", "sky", "slab", "slack", "slag", "slam", "slant", "slap", "slat", "slate", "slaw", "slay", "sled", "sledge", "sleek", "sleep", "sleepy", "slept", "slew", "slice", "slid", "slide", "slim", "slime", "sling", "slip", "slit", "slob", "sloe", "slog", "slop", "slope", "sloppy", "slosh", "slot", "sloth", "slow", "slug", "slum", "slump", "slur", "sly", "small", "smart", "smash", "smell", "smelt", "smile", "smirk", "smoke", "smug", "snack", "snag", "snail", "snake", "snap", "snarl", "sneak", "sniff", "snip", "snit", "snore", "snot", "snout", "snow", "snowy", "snug", "soak", "soap", "soapy", "soar", "sob", "sober", "soccer", "sock", "socket", "sod", "soda", "sofa", "soft", "soil", "solar", "sold", "sole", "solid", "solo", "solve", "son", "song", "sonic", "soon", "soot", "sooty", "sop", "sore", "sorry", "sort", "soul", "sound", "soup", "sour", "south", "sow", "sown", "soy", "spa", "space", "span", "spar", "spare", "spark", "sparrow", "spat", "spawn", "spay", "speak", "speaker", "spec", "sped", "speed", "spell", "spend", "spent", "spew", "sphere", "spice", "spike", "spill", "spin", "spine", "spiny", "spire", "spit", "spite", "split", "spoil", "spoke", "spoor", "sport", "spot", "spray", "spree", "spring", "spun", "spur", "spurn", "spy", "stab", "stack", "staff", "stag", "stage", "stain", "stair", "stake", "stale", "stall", "stamp", "stance", "stand", "staple", "star", "stare", "stark", "start", "state", "station", "stay", "stays", "steak", "steal", "steam", "steed", "steel", "steep", "steer", "stem", "stencil", "step", "stern", "stew", "stick", "still", "sting", "stir", "stock", "stole", "stomp", "stone", "stood", "stool", "store", "storm", "story", "stout", "stove", "stow", "strand", "strange", "strap", "straw", "stride", "string", "strip", "strut", "stub", "stuck", "stud", "student", "study", "stuff", "stump", "stun", "sty", "style", "styx", "sub", "such", "suck", "suds", "sue", "suet", "sugar", "suit", "suite", "sulk", "sum", "summer", "sump", "sun", "sung", "sunk", "sunny", "super", "sure", "surf", "surge", "swab", "swag", "swam", "swamp", "swan", "swap", "swarm", "swat", "sway", "swear", "sweat", "sweater", "sweep", "sweet", "swell", "swift", "swig", "swim", "swine", "swing", "swirl", "swish", "swoop", "swop", "sword", "swore", "swum", "sync", "syrup", "system", "tab", "table", "tack", "taco", "tact", "tag", "tail", "taint", "take", "taken", "tale", "talk", "tall", "tally", "tame", "tan", "tango", "tank", "tap", "tape", "taper", "taps", "tar", "target", "tart", "task", "taste", "taut", "tax", "taxi", "tea", "teach", "teacher", "teak", "teal", "team", "tear", "teas", "teat", "tech", "teed", "teem", "telephone", "telescope", "tell", "temple", "tempo", "ten", "tend", "tennis", "tent", "tenth", "term", "test", "text", "texture", "than", "thank", "that", "thaw", "the", "theater", "thee", "theft", "them", "theme", "then", "there", "they", "thick", "thicken", "thief", "thigh", "thin", "thing", "think", "third", "this", "those", "three", "throb", "throw", "thug", "thumb", "thus", "thy", "tiara", "tic", "tick", "ticket", "tide", "tidy", "tie", "tied", "tier", "ties", "tiger", "tight", "tile", "till", "tilt", "time", "timid", "tin", "tine", "tint", "tiny", "tip", "tips", "tire", "tired", "titan", "title", "toad", "toast", "tock", "today", "toe", "toed", "toes", "toga", "toil", "token", "told", "toll", "tomb", "ton", "tone", "tong", "tonic", "too", "took", "tool", "toot", "tooth", "top", "topic", "tops", "torch", "tore", "torn", "tort", "tory", "toss", "tot", "total", "tote", "touch", "tough", "tour", "tow", "toward", "tower", "town", "tows", "toxic", "toy", "toys", "trace", "track", "trade", "tragedy", "trail", "train", "trait", "tramp", "trap", "trash", "travel", "tray", "tread", "treat", "tree", "trek", "trend", "trial", "tribe", "trick", "tried", "trim", "trio", "trip", "trod", "troop", "trot", "trout", "truce", "truck", "true", "truly", "trump", "trumpet", "trunk", "trust", "truth", "try", "tub", "tuba", "tuck", "tuft", "tug", "tulip", "tumor", "tuna", "tune", "tunic", "turd", "turf", "turn", "turning", "turtle", "tusk", "tux", "twice", "twig", "twin", "twine", "twist", "twister", "two", "tying", "type", "ugly", "ultra", "umbrella", "uncle", "under", "undo", "undue", "unify", "union", "unit", "unite", "unity", "universe", "until", "upon", "upper", "upset", "urban", "urge", "urn", "usage", "use", "used", "user", "usher", "usual", "utter", "vacation", "vague", "vail", "vain", "vair", "vale", "valid", "valley", "valor", "value", "vamp", "van", "vane", "vanilla", "vapor", "vary", "vase", "vast", "vat", "vault", "veal", "veer", "vehicle", "vein", "venom", "venue", "verse", "vest", "vet", "veto", "vex", "via", "vial", "vibe", "vice", "video", "vie", "view", "vigil", "vile", "villa", "village", "vine", "vinyl", "viola", "violin", "viper", "virus", "visa", "visit", "vital", "vivid", "vocal", "vodka", "vogue", "voice", "void", "volcano", "vole", "vote", "voter", "vow", "vowel", "wad", "wade", "wafer", "waft", "wag", "wage", "wager", "wages", "wagon", "wail", "waist", "wait", "wake", "wale", "walk", "wall", "walt", "wand", "wane", "want", "war", "ward", "warden", "ware", "warm", "warn", "warp", "wars", "wart", "wary", "was", "wash", "wasp", "watch", "water", "watt", "wave", "wavy", "wax", "waxy", "way", "ways", "weak", "weal", "wean", "wear", "weather", "web", "webs", "wed", "wedge", "wee", "weed", "week", "weekend", "weep", "weld", "well", "welt", "went", "wept", "were", "west", "wet", "wets", "whale", "what", "wheat", "wheel", "when", "where", "whet", "whey", "which", "while", "whim", "whip", "whir", "whit", "whiz", "who", "whole", "whom", "whore", "whose", "why", "wick", "wide", "widen", "widow", "width", "wife", "wig", "wild", "will", "willy", "wilt", "win", "wind", "window", "wine", "wing", "wink", "winner", "wipe", "wire", "wise", "wish", "wisp", "wit", "witch", "with", "wits", "woe", "woke", "woken", "wolf", "woman", "womb", "won", "wood", "wool", "word", "wore", "work", "world", "worm", "worn", "worry", "worse", "worst", "worth", "would", "wound", "woven", "wow", "wrap", "wrath", "wren", "wrist", "writ", "write", "writer", "wrong", "wry", "yacht", "yak", "yam", "yang", "yap", "yard", "yarn", "yaw", "yawn", "yea", "yeah", "year", "yearn", "yearning", "yell", "yelp", "yen", "yes", "yet", "yew", "yield", "yoga", "yoke", "yolk", "you", "young", "your", "yours", "youth", "yowl", "zap", "zeal", "zebra", "zero", "zest", "zesty", "zig", "zinc", "zip", "zone", "zoo", "zoom"];
+
+
+/* ============================================================
+   LEXICON FORGE — game engine
+   ============================================================ */
+
+const TIER_NAMES = ["Novice","Beginner","Amateur","Intermediate","Adept","Skilled","Proficient","Advanced","Expert","Specialist","Veteran","Master","Elite","Champion","Virtuoso","Genius","Prodigy","Legend","Mythic","Grandmaster"];
+const TIER_COLORS = ["#8bd3c7","#7fb7d9","#8ec27a","#c9c25a","#d4a537","#e0913a","#d97757","#c85a5a","#b8483d","#a83e6a","#8a4fb0","#6a5fc7","#4f7fd9","#3d8f89","#2fa0a0","#c9a3e0","#e0c761","#d4a537","#f0c761","#f5d98a"];
+
+const LEVELS_PER_TIER = 1000;
+const LEVELS_PER_PACK = 100;
+const TOTAL_LEVELS = LEVELS_PER_TIER * TIER_NAMES.length; // 20000
+const PACKS_PER_TIER = LEVELS_PER_TIER / LEVELS_PER_PACK;   // 10
+
+const WORDS_BY_LEN = {};
+for (const w of WORD_LIST) { (WORDS_BY_LEN[w.length] = WORDS_BY_LEN[w.length] || []).push(w); }
+
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function shuffledCopy(arr, rng){
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function letterCounts(word){
+  const c = {};
+  for (const ch of word) c[ch] = (c[ch] || 0) + 1;
+  return c;
+}
+function canFormFromBag(word, bag){
+  const c = letterCounts(word);
+  for (const ch in c) if ((bag[ch] || 0) < c[ch]) return false;
+  return true;
+}
+function tierIndexForLevel(level){ return Math.min(TIER_NAMES.length - 1, Math.floor((level - 1) / LEVELS_PER_TIER)); }
+function packIndexForLevel(level){ return Math.floor(((level - 1) % LEVELS_PER_TIER) / LEVELS_PER_PACK); }
+function letterCountForTier(tierIdx){
+  const table = [4,4,4,5,5,5,6,6,6,7,7,7,8,8,8,9,9,9,9,9];
+  return table[tierIdx];
+}
+function targetGridWordsForTier(tierIdx){ return Math.min(4 + Math.floor(tierIdx / 2), 9); }
+function hintsForTier(tierIdx){ return 1; }
+
+function poolForLength(N){
+  for (let d = 0; d < 6; d++){
+    if (WORDS_BY_LEN[N + d] && WORDS_BY_LEN[N + d].length) return { pool: WORDS_BY_LEN[N + d], len: N + d };
+    if (d > 0 && WORDS_BY_LEN[N - d] && WORDS_BY_LEN[N - d].length) return { pool: WORDS_BY_LEN[N - d], len: N - d };
+  }
+  return { pool: WORDS_BY_LEN[4], len: 4 };
+}
+
+function layoutCrossword(words){
+  const sorted = [...words].sort((a,b) => b.length - a.length);
+  const placed = [];
+  const grid = new Map();
+  function canPlace(word,row,col,dir){
+    for (let i = 0; i < word.length; i++){
+      const r = dir === 'V' ? row + i : row;
+      const c = dir === 'H' ? col + i : col;
+      const key = r + ',' + c;
+      if (grid.has(key) && grid.get(key) !== word[i]) return false;
+    }
+    return true;
+  }
+  function place(word,row,col,dir){
+    for (let i = 0; i < word.length; i++){
+      const r = dir === 'V' ? row + i : row;
+      const c = dir === 'H' ? col + i : col;
+      grid.set(r + ',' + c, word[i]);
+    }
+    placed.push({ word, row, col, dir });
+  }
+  if (!sorted.length) return { placed: [], bonus: [] };
+  place(sorted[0], 0, 0, 'H');
+  const bonus = [];
+  for (let idx = 1; idx < sorted.length; idx++){
+    const word = sorted[idx];
+    let bestSpot = null;
+    outer:
+    for (const p of placed){
+      for (let i = 0; i < word.length; i++){
+        for (let j = 0; j < p.word.length; j++){
+          if (word[i] === p.word[j]){
+            let row,col,dir;
+            if (p.dir === 'H'){ dir = 'V'; row = p.row - i; col = p.col + j; }
+            else { dir = 'H'; row = p.row + j; col = p.col - i; }
+            if (canPlace(word,row,col,dir)){ bestSpot = { row, col, dir }; break outer; }
+          }
+        }
+      }
+    }
+    if (bestSpot) place(word, bestSpot.row, bestSpot.col, bestSpot.dir);
+    else bonus.push(word);
+  }
+  return { placed, bonus };
+}
+
+function generateLevelCore(seedNum, tierIdx, meta){
+  const N = letterCountForTier(tierIdx);
+  const rng = mulberry32((seedNum * 2654435761) ^ 0x9e3779b9);
+  const { pool, len } = poolForLength(N);
+  const targetWords = targetGridWordsForTier(tierIdx);
+
+  let best = null;
+  const attempts = 14;
+  for (let a = 0; a < attempts; a++){
+    const base = pool[Math.floor(rng() * pool.length)];
+    const bag = letterCounts(base);
+    const found = WORD_LIST.filter(w => w.length >= 3 && w.length <= len && canFormFromBag(w, bag));
+    if (!best || found.length > best.found.length) best = { base, found };
+    if (found.length >= targetWords + 2) break;
+  }
+
+  const foundSorted = best.found.slice().sort((a,b) => b.length - a.length || a.localeCompare(b));
+  const gridCandidates = foundSorted.slice(0, Math.max(targetWords, 4));
+  const { placed, bonus: unplacedFromGrid } = layoutCrossword(gridCandidates);
+  const placedWords = new Set(placed.map(p => p.word));
+  const bonusWords = foundSorted.filter(w => !placedWords.has(w));
+
+  let minRow=0,maxRow=0,minCol=0,maxCol=0;
+  placed.forEach(p => {
+    const endRow = p.dir === 'V' ? p.row + p.word.length - 1 : p.row;
+    const endCol = p.dir === 'H' ? p.col + p.word.length - 1 : p.col;
+    minRow = Math.min(minRow, p.row); maxRow = Math.max(maxRow, endRow);
+    minCol = Math.min(minCol, p.col); maxCol = Math.max(maxCol, endCol);
+  });
+  const rows = maxRow - minRow + 1, cols = maxCol - minCol + 1;
+  const cellMap = {};
+  const normPlaced = placed.map(p => {
+    const nr = p.row - minRow, nc = p.col - minCol;
+    for (let i = 0; i < p.word.length; i++){
+      const r = p.dir === 'V' ? nr + i : nr;
+      const c = p.dir === 'H' ? nc + i : nc;
+      const key = r + '_' + c;
+      cellMap[key] = cellMap[key] || { letter: p.word[i], found: false, words: [] };
+      cellMap[key].words.push(p.word);
+    }
+    return { word: p.word, row: nr, col: nc, dir: p.dir };
+  });
+
+  const letters = shuffledCopy(best.base.split(''), rng);
+
+  return Object.assign({
+    tierIdx, tierName: TIER_NAMES[tierIdx],
+    letters, letterBag: letterCounts(best.base),
+    allValid: new Set(best.found),
+    gridWords: normPlaced,
+    bonusWords,
+    rows, cols, cellMap,
+    hintsTotal: hintsForTier(tierIdx),
+    isDaily: false
+  }, meta);
+}
+function generateLevel(level){
+  const tierIdx = tierIndexForLevel(level);
+  return generateLevelCore(level, tierIdx, { level });
+}
+function todayDateNum(){
+  const n = new Date();
+  return n.getFullYear() * 10000 + (n.getMonth() + 1) * 100 + n.getDate();
+}
+function generateDailyChallenge(){
+  const n = new Date();
+  const dateNum = todayDateNum();
+  const tierIdx = dateNum % TIER_NAMES.length;
+  const dateLabel = `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+  const lvl = generateLevelCore(dateNum, tierIdx, { level: 'daily', isDaily: true, dateNum, dateLabel });
+  return lvl;
+}
+
+/* ============================================================
+   AUDIO ENGINE — everything is synthesized live with the Web
+   Audio API. No external sound files: this keeps the game a
+   single self-contained HTML file and sidesteps any music
+   licensing question entirely. Each rank gets its own
+   procedurally generated ambient loop (root note, scale, tempo,
+   and timbre all shift with the rank), and there are three
+   short synthesized cues: point gained, wrong word, level
+   complete.
+   ============================================================ */
+let audioCtx = null, masterGain = null, musicGainNode = null, sfxGainNode = null;
+let currentMusicTier = -1;
+let musicOn = true, sfxOn = true;
+let musicStopFlag = { stopped: true };
+
+function ensureAudio(){
+  if (!audioCtx){
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return false;
+    audioCtx = new AC();
+    masterGain = audioCtx.createGain(); masterGain.gain.value = 1;
+    musicGainNode = audioCtx.createGain(); musicGainNode.gain.value = musicOn ? 0.11 : 0;
+    sfxGainNode = audioCtx.createGain(); sfxGainNode.gain.value = sfxOn ? 0.3 : 0;
+    musicGainNode.connect(masterGain);
+    sfxGainNode.connect(masterGain);
+    masterGain.connect(audioCtx.destination);
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return true;
+}
+
+function playTone(freq, startTime, dur, wave, filterFreq, gainNode, peak){
+  const osc = audioCtx.createOscillator();
+  osc.type = wave;
+  osc.frequency.setValueAtTime(freq, startTime);
+  const filt = audioCtx.createBiquadFilter();
+  filt.type = 'lowpass';
+  filt.frequency.value = filterFreq;
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(0.0001, startTime);
+  g.gain.linearRampToValueAtTime(peak, startTime + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, startTime + dur);
+  osc.connect(filt); filt.connect(g); g.connect(gainNode);
+  osc.start(startTime);
+  osc.stop(startTime + dur + 0.05);
+}
+
+/* ---- rank (tier) music themes — procedurally derived, each
+   rank sounds distinct: key/root, scale mood, tempo and
+   waveform timbre all shift as the ranks get harder. ---- */
+function themeForTier(tierIdx){
+  const roots = [220.00,246.94,261.63,293.66,329.63,349.23,392.00,440.00,466.16,523.25,
+                 587.33,659.25,698.46,783.99,880.00,932.33,1046.50,1174.66,1244.51,1318.51];
+  const root = roots[tierIdx % roots.length];
+  let scale, wave;
+  if (tierIdx < 7){ scale = [0,2,4,7,9]; wave = 'sine'; }           // calm major pentatonic
+  else if (tierIdx < 14){ scale = [0,2,3,5,7,8,10]; wave = 'triangle'; } // natural minor, a bit moodier
+  else { scale = [0,2,3,5,7,8,11]; wave = 'sawtooth'; }             // harmonic minor, tense & bright
+  const bpm = 66 + tierIdx * 3.6;
+  const filterFreq = 850 + tierIdx * 130;
+  const progression = [[0,2,4],[3,5,0],[4,6,1],[0,2,4]];
+  return { root, scale, wave, bpm, filterFreq, progression };
+}
+function noteFreq(root, scale, degree, octaveShift){
+  const len = scale.length;
+  const idx = ((degree % len) + len) % len;
+  const octave = Math.floor(degree / len) + (octaveShift || 0);
+  return root * Math.pow(2, (scale[idx] + octave * 12) / 12);
+}
+function stopMusic(){
+  musicStopFlag.stopped = true;
+  currentMusicTier = -1;
+}
+// Backgrounding a tab/app doesn't stop a running AudioContext by
+// itself — without this, music (and any in-flight sfx) would keep
+// playing after switching away. Suspend on hide, resume on return.
+document.addEventListener('visibilitychange', () => {
+  if (!audioCtx) return;
+  if (document.hidden){
+    if (audioCtx.state === 'running') audioCtx.suspend();
+  } else if (audioCtx.state === 'suspended' && currentMusicTier !== -1){
+    audioCtx.resume();
+  }
+});
+// Covers actually closing/navigating away (some mobile browsers
+// fire this instead of, or in addition to, beforeunload).
+window.addEventListener('pagehide', () => {
+  saveGame();
+  stopMusic();
+  if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
+});
+function startMusicForTier(tierIdx){
+  if (tierIdx === currentMusicTier) return; // same rank already looping — let it continue
+  if (!ensureAudio()) return;
+  musicStopFlag.stopped = true;              // signal any previous loop to stop
+  const myFlag = { stopped: false };
+  musicStopFlag = myFlag;
+  currentMusicTier = tierIdx;
+  const theme = themeForTier(tierIdx);
+  const beatDur = 60 / theme.bpm;
+  let step = 0;
+  function loop(){
+    if (myFlag.stopped) return;
+    const chord = theme.progression[Math.floor(step / 4) % theme.progression.length];
+    const degree = chord[step % chord.length];
+    const freq = noteFreq(theme.root, theme.scale, degree, 0);
+    const now = audioCtx.currentTime;
+    playTone(freq, now, beatDur * 0.9, theme.wave, theme.filterFreq, musicGainNode, 0.22);
+    if (step % 4 === 0){
+      const bassFreq = noteFreq(theme.root, theme.scale, chord[0], -1);
+      playTone(bassFreq, now, beatDur * 3.8, 'sine', theme.filterFreq * 0.45, musicGainNode, 0.16);
+    }
+    step++;
+    setTimeout(loop, beatDur * 1000);
+  }
+  loop();
+}
+
+/* ---- sound effects ---- */
+function sfxPoint(){
+  if (!ensureAudio()) return;
+  const now = audioCtx.currentTime;
+  playTone(880, now, 0.12, 'sine', 4200, sfxGainNode, 0.5);
+  playTone(1318.51, now + 0.05, 0.16, 'sine', 4200, sfxGainNode, 0.4);
+}
+function sfxAlreadyFound(){
+  if (!ensureAudio()) return;
+  playTone(440, audioCtx.currentTime, 0.09, 'triangle', 2200, sfxGainNode, 0.22);
+}
+function sfxWrong(){
+  if (!ensureAudio()) return;
+  const now = audioCtx.currentTime;
+  playTone(220, now, 0.18, 'sawtooth', 800, sfxGainNode, 0.32);
+  playTone(174.61, now + 0.09, 0.22, 'sawtooth', 700, sfxGainNode, 0.28);
+}
+function sfxComplete(){
+  if (!ensureAudio()) return;
+  const now = audioCtx.currentTime;
+  [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+    playTone(f, now + i * 0.09, 0.35, 'triangle', 5200, sfxGainNode, 0.45);
+  });
+}
+function toggleMusic(){
+  musicOn = !musicOn;
+  if (ensureAudio()) musicGainNode.gain.value = musicOn ? 0.11 : 0;
+  updateSettingsUI();
+}
+function toggleSfx(){
+  sfxOn = !sfxOn;
+  if (ensureAudio()) sfxGainNode.gain.value = sfxOn ? 0.3 : 0;
+  updateSettingsUI();
+  if (sfxOn) sfxPoint();
+}
+function updateSettingsUI(){
+  const m = document.getElementById('settings-music');
+  const s = document.getElementById('settings-sound');
+  if (m) m.classList.toggle('off', !musicOn);
+  if (s) s.classList.toggle('off', !sfxOn);
+}
+function openSettings(){
+  updateSettingsUI();
+  showScreen('screen-settings');
+}
+
+/* ============================================================
+   ADS
+   The game is fully playable offline — ads only ever appear when
+   the device reports it's online, since there's no creative to
+   fetch/play without a connection. The banner and both ad
+   overlays below are placeholder "house ads" so the exact
+   behavior (persistent banner, interstitial every 2 rounds,
+   rewarded ad for a hint) can be seen and tested immediately.
+   To run real paid ads, swap the placeholder markup in
+   #banner-ad-slot / #overlay-interstitial-ad / #overlay-rewarded-ad
+   for your ad network's tags (e.g. Google AdSense/Ad Manager
+   display units, or the H5 Games Ads placement API for
+   interstitial + rewarded), using your own approved publisher
+   account and ad unit IDs — those can't be generated here.
+   ============================================================ */
+function updateOnlineState(){
+  document.getElementById('app').classList.toggle('ads-online', navigator.onLine);
+  if (level && document.getElementById('screen-game').classList.contains('active')) renderGrid();
+  const hintBtn = document.getElementById('hint-btn');
+  if (hintBtn) updateHintButton();
+}
+window.addEventListener('online', updateOnlineState);
+window.addEventListener('offline', updateOnlineState);
+
+function showInterstitialThen(action){
+  if (!navigator.onLine || !pendingInterstitial){
+    action();
+    return;
+  }
+  pendingInterstitial = false;
+  interstitialContinueAction = action;
+  const overlay = document.getElementById('overlay-interstitial-ad');
+  const closeBtn = document.getElementById('interstitial-close-btn');
+  const timerEl = document.getElementById('interstitial-timer');
+  closeBtn.style.display = 'none';
+  overlay.classList.add('show');
+  let secondsLeft = 5;
+  timerEl.textContent = 'Ad ends in ' + secondsLeft + 's';
+  const tick = setInterval(() => {
+    secondsLeft--;
+    if (secondsLeft <= 0){
+      clearInterval(tick);
+      timerEl.textContent = 'Ad finished';
+      closeBtn.style.display = '';
+    } else {
+      timerEl.textContent = 'Ad ends in ' + secondsLeft + 's';
+    }
+  }, 1000);
+}
+function closeInterstitialAd(){
+  document.getElementById('overlay-interstitial-ad').classList.remove('show');
+  const action = interstitialContinueAction;
+  interstitialContinueAction = null;
+  if (action) action();
+}
+
+let rewardedContinueAction = null;
+function showRewardedAd(onComplete){
+  rewardedContinueAction = onComplete;
+  const overlay = document.getElementById('overlay-rewarded-ad');
+  const claimBtn = document.getElementById('rewarded-claim-btn');
+  const timerEl = document.getElementById('rewarded-timer');
+  claimBtn.style.display = 'none';
+  overlay.classList.add('show');
+  let secondsLeft = 5;
+  timerEl.textContent = secondsLeft + 's remaining';
+  const tick = setInterval(() => {
+    secondsLeft--;
+    if (secondsLeft <= 0){
+      clearInterval(tick);
+      timerEl.textContent = 'Reward ready!';
+      claimBtn.style.display = '';
+    } else {
+      timerEl.textContent = secondsLeft + 's remaining';
+    }
+  }, 1000);
+}
+function claimRewardedAd(){
+  document.getElementById('overlay-rewarded-ad').classList.remove('show');
+  const action = rewardedContinueAction;
+  rewardedContinueAction = null;
+  if (action) action();
+}
+function resetProgressConfirm(){
+  if (!confirm('Reset all progress? This clears unlocked ranks, stars, coins, and saved progress permanently.')) return;
+  progress.unlockedLevel = 1;
+  progress.stars = {};
+  progress.currentLevel = 1;
+  progress.dailyCompletedDates = new Set();
+  progress.coins = 0;
+  level = null;
+  foundGrid = new Set();
+  foundBonus = new Set();
+  score = 0;
+  pendingSession = null;
+  try { localStorage.removeItem(SAVE_KEY); } catch(e){}
+  refreshMenu();
+}
+
+/* ============================================================
+   PROGRESS STATE + PERSISTENCE
+   Saved to localStorage so the game resumes exactly where you
+   left off — even after closing the browser/app — as long as
+   that storage isn't cleared (e.g. via "clear app data" or a
+   private/incognito session that discards it on close).
+   Note: this save layer won't function inside Claude.ai's own
+   in-chat preview sandbox (browser storage is blocked there by
+   design), but it works normally once you download this file
+   and open it directly, or host it yourself.
+   ============================================================ */
+const SAVE_KEY = 'lexiconForgeSave_v1';
+const HINT_COST = 100;
+
+const progress = {
+  unlockedLevel: 1,
+  stars: {},        // levelNum -> 1|2|3
+  currentLevel: 1,
+  dailyCompletedDates: new Set(), // dateNum values completed
+  coins: 0,         // persistent wallet, accumulates across every level played
+  roundsSinceAd: 0  // completed rounds since the last interstitial ad
+};
+let pendingSession = null; // an in-progress level snapshot restored from storage, awaiting resume
+let pendingInterstitial = false;
+let interstitialContinueAction = null;
+
+let level = null;           // current generateLevel() result
+let foundGrid = new Set();
+let foundBonus = new Set();
+let score = 0;
+let hintsLeft = 0;
+let selection = [];         // indices into level.letters currently chosen
+let dragging = false;
+let toastTimer = null;
+
+/* ---------------- save / load ---------------- */
+function currentSessionSnapshot(){
+  if (!level) return pendingSession; // not yet resumed this visit — keep whatever was loaded
+  if (foundGrid.size >= totalGridWords()) return null; // finished — nothing to resume
+  const hintedCellKeys = [];
+  for (const key in level.cellMap){
+    const cell = level.cellMap[key];
+    if (cell.found && !cell.words.some(w => foundGrid.has(w))) hintedCellKeys.push(key);
+  }
+  return {
+    mode: level.isDaily ? 'daily' : 'level',
+    levelNum: level.isDaily ? null : level.level,
+    dateNum: level.isDaily ? level.dateNum : null,
+    foundGridWords: Array.from(foundGrid),
+    foundBonusWords: Array.from(foundBonus),
+    hintsLeft, score,
+    letters: level.letters,
+    hintedCellKeys
+  };
+}
+function saveGame(){
+  try{
+    const data = {
+      unlockedLevel: progress.unlockedLevel,
+      stars: progress.stars,
+      currentLevel: progress.currentLevel,
+      dailyCompletedDates: Array.from(progress.dailyCompletedDates),
+      coins: progress.coins,
+      roundsSinceAd: progress.roundsSinceAd,
+      session: currentSessionSnapshot()
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  } catch(e){ /* storage unavailable in this environment — game still plays fine this session */ }
+}
+function loadGame(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    progress.unlockedLevel = data.unlockedLevel || 1;
+    progress.stars = data.stars || {};
+    progress.currentLevel = data.currentLevel || 1;
+    progress.dailyCompletedDates = new Set(data.dailyCompletedDates || []);
+    progress.coins = data.coins || 0;
+    progress.roundsSinceAd = data.roundsSinceAd || 0;
+    pendingSession = data.session || null;
+  } catch(e){ /* no valid save found — start fresh */ }
+}
+function restoreLevelFromSnapshot(snap){
+  if (snap.mode === 'daily') level = generateDailyChallenge();
+  else level = generateLevel(snap.levelNum);
+  level.letters = snap.letters;
+  foundGrid = new Set(snap.foundGridWords);
+  foundBonus = new Set(snap.foundBonusWords);
+  hintsLeft = snap.hintsLeft;
+  score = snap.score;
+  selection = [];
+  for (const word of foundGrid){
+    const g = level.gridWords.find(gw => gw.word === word);
+    if (g) for (const key of cellKeysForWord(g)) level.cellMap[key].found = true;
+  }
+  for (const key of (snap.hintedCellKeys || [])){
+    if (level.cellMap[key]) level.cellMap[key].found = true;
+  }
+}
+
+/* ---------------- navigation ---------------- */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function refreshMenu(){
+  const tIdx = tierIndexForLevel(progress.currentLevel);
+  document.getElementById('menu-level').textContent = progress.currentLevel;
+  document.getElementById('menu-tier').textContent = TIER_NAMES[tIdx];
+  document.getElementById('menu-play-level').textContent = progress.currentLevel;
+  document.getElementById('menu-coins').textContent = progress.coins;
+  const dailyBtn = document.getElementById('daily-btn');
+  if (dailyBtn){
+    dailyBtn.innerHTML = progress.dailyCompletedDates.has(todayDateNum())
+      ? '&#127775; Daily Challenge &#10003; Done'
+      : '&#127775; Daily Challenge';
+  }
+}
+function openTiers(){ renderTiers(); showScreen('screen-tiers'); }
+
+let selectedTierIdx = 0, selectedPackIdx = 0;
+
+function tierCompletedCount(tIdx){
+  let n = 0;
+  const start = tIdx * LEVELS_PER_TIER + 1, end = start + LEVELS_PER_TIER - 1;
+  for (let l = start; l <= end; l++) if (progress.stars[l]) n++;
+  return n;
+}
+function packCompletedCount(tIdx, pIdx){
+  let n = 0;
+  const start = tIdx * LEVELS_PER_TIER + pIdx * LEVELS_PER_PACK + 1, end = start + LEVELS_PER_PACK - 1;
+  for (let l = start; l <= end; l++) if (progress.stars[l]) n++;
+  return n;
+}
+function renderTiers(){
+  const wrap = document.getElementById('tier-list');
+  wrap.innerHTML = '';
+  TIER_NAMES.forEach((name, i) => {
+    const start = i * LEVELS_PER_TIER + 1, end = start + LEVELS_PER_TIER - 1;
+    const done = tierCompletedCount(i);
+    const pct = Math.round((done / LEVELS_PER_TIER) * 100);
+    const locked = start > progress.unlockedLevel;
+    const isCurrent = progress.currentLevel >= start && progress.currentLevel <= end;
+    const card = document.createElement('div');
+    card.className = 'tier-card' + (locked ? ' locked' : '') + (isCurrent ? ' current' : '');
+    card.innerHTML = `
+      <div class="tier-medal" style="background:${TIER_COLORS[i]}">${i+1}</div>
+      <div class="tier-info">
+        <div class="tier-name">${name}</div>
+        <div class="tier-range">Levels ${start.toLocaleString()}–${end.toLocaleString()}</div>
+        <div class="tier-bar"><div class="tier-bar-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="tier-pct">${pct}%</div>`;
+    if (!locked) card.onclick = () => { selectedTierIdx = i; openPacks(i); };
+    wrap.appendChild(card);
+  });
+}
+function openPacks(tIdx){
+  selectedTierIdx = tIdx;
+  document.getElementById('pack-eyebrow').textContent = 'Rank ' + (tIdx+1) + ' of ' + TIER_NAMES.length;
+  document.getElementById('pack-title').textContent = TIER_NAMES[tIdx];
+  const grid = document.getElementById('pack-grid');
+  grid.innerHTML = '';
+  for (let p = 0; p < PACKS_PER_TIER; p++){
+    const start = tIdx * LEVELS_PER_TIER + p * LEVELS_PER_PACK + 1, end = start + LEVELS_PER_PACK - 1;
+    const done = packCompletedCount(tIdx, p);
+    const pct = Math.round((done / LEVELS_PER_PACK) * 100);
+    const locked = start > progress.unlockedLevel;
+    const card = document.createElement('div');
+    card.className = 'pack-card' + (locked ? ' locked' : '');
+    card.innerHTML = `
+      <div class="p-name">Pack ${p+1}</div>
+      <div class="p-range">${start.toLocaleString()}–${end.toLocaleString()}</div>
+      <div class="tier-bar"><div class="tier-bar-fill" style="width:${pct}%"></div></div>`;
+    if (!locked) card.onclick = () => { selectedPackIdx = p; openLevels(tIdx, p); };
+    grid.appendChild(card);
+  }
+  showScreen('screen-packs');
+}
+function openLevels(tIdx, pIdx){
+  selectedTierIdx = tIdx; selectedPackIdx = pIdx;
+  const start = tIdx * LEVELS_PER_TIER + pIdx * LEVELS_PER_PACK + 1, end = start + LEVELS_PER_PACK - 1;
+  document.getElementById('levels-eyebrow').textContent = TIER_NAMES[tIdx] + ' · Pack ' + (pIdx+1);
+  document.getElementById('levels-title').textContent = `Levels ${start.toLocaleString()}–${end.toLocaleString()}`;
+  const grid = document.getElementById('level-grid');
+  grid.innerHTML = '';
+  for (let l = start; l <= end; l++){
+    const locked = l > progress.unlockedLevel;
+    const done = !!progress.stars[l];
+    const isCurrent = l === progress.currentLevel;
+    const btn = document.createElement('div');
+    btn.className = 'level-btn' + (done ? ' done' : '') + (locked ? ' locked' : '') + (isCurrent ? ' current' : '');
+    const starStr = done ? '&#9733;'.repeat(progress.stars[l]) : '';
+    btn.innerHTML = `<div>${l}</div><div class="stars">${starStr}</div>`;
+    if (!locked) btn.onclick = () => { progress.currentLevel = l; startCurrentLevel(); };
+    grid.appendChild(btn);
+  }
+  showScreen('screen-levels');
+}
+
+/* ---------------- game flow ---------------- */
+function startCurrentLevel(){
+  showScreen('screen-game');
+  loadLevel(progress.currentLevel);
+}
+function exitGame(){
+  saveGame();
+  stopMusic();
+  refreshMenu();
+  showScreen('screen-menu');
+}
+function loadLevel(num){
+  // If the player is returning to the very level they were already
+  // mid-way through (and hadn't finished it), resume it exactly as
+  // they left it — same found words, hints left, coins earned so
+  // far, and wheel arrangement. Only start fresh if it's a different
+  // level, or this one was already completed (replay).
+  if (level && !level.isDaily && level.level === num && foundGrid.size < totalGridWords()){
+    renderLevelUI();
+    saveGame();
+    return;
+  }
+  if (pendingSession && pendingSession.mode === 'level' && pendingSession.levelNum === num){
+    restoreLevelFromSnapshot(pendingSession);
+    pendingSession = null;
+    renderLevelUI();
+    saveGame();
+    return;
+  }
+  level = generateLevel(num);
+  resetLevelState();
+  renderLevelUI();
+  saveGame();
+}
+function loadDailyLevel(){
+  const todayNum = todayDateNum();
+  if (level && level.isDaily && level.dateNum === todayNum && foundGrid.size < totalGridWords()){
+    renderLevelUI();
+    saveGame();
+    return;
+  }
+  if (pendingSession && pendingSession.mode === 'daily' && pendingSession.dateNum === todayNum){
+    restoreLevelFromSnapshot(pendingSession);
+    pendingSession = null;
+    renderLevelUI();
+    saveGame();
+    return;
+  }
+  level = generateDailyChallenge();
+  resetLevelState();
+  renderLevelUI();
+  saveGame();
+}
+function startDailyChallenge(){
+  showScreen('screen-game');
+  loadDailyLevel();
+}
+function resetLevelState(){
+  foundGrid = new Set();
+  foundBonus = new Set();
+  score = 0;
+  hintsLeft = level.hintsTotal;
+  selection = [];
+}
+function renderLevelUI(){
+  updateHintButton();
+  document.getElementById('game-level').textContent = level.isDaily ? 'Daily' : level.level;
+  document.getElementById('game-tier').textContent = level.isDaily ? (level.tierName + ' · ' + level.dateLabel) : level.tierName;
+  renderGrid();
+  renderWheel();
+  renderBonusStrip();
+  updateProgressBar();
+  document.getElementById('current-word').textContent = '';
+  startMusicForTier(level.tierIdx);
+}
+function totalGridWords(){ return level.gridWords.length; }
+
+function renderGrid(){
+  const el = document.getElementById('crossgrid');
+  el.style.gridTemplateColumns = `repeat(${level.cols}, 34px)`;
+  el.innerHTML = '';
+  for (let r = 0; r < level.rows; r++){
+    for (let c = 0; c < level.cols; c++){
+      const key = r + '_' + c;
+      const data = level.cellMap[key];
+      const div = document.createElement('div');
+      if (!data){ div.className = 'cell empty'; }
+      else {
+        div.className = 'cell tile' + (data.found ? ' found' : '');
+        div.id = 'cell-' + key;
+        div.innerHTML = `<div class="letter">${data.letter.toUpperCase()}</div>`;
+      }
+      el.appendChild(div);
+    }
+  }
+}
+function renderBonusStrip(){
+  const strip = document.getElementById('bonus-strip');
+  strip.innerHTML = '';
+  foundBonus.forEach(w => {
+    const chip = document.createElement('div');
+    chip.className = 'bonus-word-chip';
+    chip.textContent = w.toUpperCase();
+    strip.appendChild(chip);
+  });
+}
+function updateProgressBar(){
+  const total = totalGridWords();
+  const done = foundGrid.size;
+  document.getElementById('progress-fill').style.width = (total ? (done/total*100) : 0) + '%';
+  document.getElementById('progress-label').textContent = `${done}/${total} words`;
+  document.getElementById('bonus-count').textContent = foundBonus.size;
+  document.getElementById('score-count').textContent = progress.coins;
+}
+function updateHintButton(){
+  const btn = document.getElementById('hint-btn');
+  if (hintsLeft > 0){
+    btn.textContent = '\u{1F4A1} Hint (' + hintsLeft + ')';
+  } else if (progress.coins >= HINT_COST){
+    btn.textContent = '\u{1F4A1} Buy Hint (' + HINT_COST + ')';
+  } else {
+    btn.textContent = '\u{1F4FA} Watch Ad for Hint';
+  }
+}
+function pointsForWord(word, isBonus){
+  // Grid words score more since they're required; real-but-unlisted bonus
+  // words still earn a small reward instead of being rejected.
+  // Tuned so a typical level (all grid words + ~half the bonus words) nets ~30 points.
+  const base = isBonus ? 0.8 : 2;
+  const mult = isBonus ? 0.2 : 0.4;
+  return Math.max(1, Math.round(base + (word.length - 3) * mult));
+}
+
+/* ---------------- letter wheel ---------------- */
+function renderWheel(){
+  const box = document.getElementById('wheel-box');
+  box.querySelectorAll('.wheel-letter').forEach(n => n.remove());
+  const n = level.letters.length;
+  const R = 95, cx = 125, cy = 125;
+  const tileSize = n <= 6 ? 58 : (n <= 8 ? 50 : 44);
+  level.letters.forEach((ch, i) => {
+    const angle = (Math.PI * 2 * i / n) - Math.PI/2;
+    const x = cx + R * Math.cos(angle);
+    const y = cy + R * Math.sin(angle);
+    const div = document.createElement('div');
+    div.className = 'wheel-letter';
+    div.style.left = x + 'px';
+    div.style.top = y + 'px';
+    div.style.width = tileSize + 'px';
+    div.style.height = tileSize + 'px';
+    div.style.fontSize = (tileSize * 0.38) + 'px';
+    div.dataset.idx = i;
+    div.textContent = ch.toUpperCase();
+    div.addEventListener('pointerdown', onLetterDown);
+    box.appendChild(div);
+  });
+  clearSelection();
+}
+function wheelLetterEls(){ return Array.from(document.querySelectorAll('.wheel-letter')); }
+
+function onLetterDown(e){
+  e.preventDefault();
+  dragging = true;
+  clearSelection();
+  addToSelection(parseInt(e.currentTarget.dataset.idx, 10));
+  document.addEventListener('pointermove', onPointerMove);
+  document.addEventListener('pointerup', onPointerUp);
+}
+function onPointerMove(e){
+  if (!dragging) return;
+  const els = wheelLetterEls();
+  for (const el of els){
+    const idx = parseInt(el.dataset.idx, 10);
+    if (selection.includes(idx)) continue;
+    const rect = el.getBoundingClientRect();
+    const dx = e.clientX - (rect.left + rect.width/2);
+    const dy = e.clientY - (rect.top + rect.height/2);
+    if (Math.sqrt(dx*dx + dy*dy) < rect.width * 0.62){
+      addToSelection(idx);
+    }
+  }
+  drawTether(e.clientX, e.clientY);
+}
+function onPointerUp(){
+  dragging = false;
+  document.removeEventListener('pointermove', onPointerMove);
+  document.removeEventListener('pointerup', onPointerUp);
+  submitSelection();
+}
+function addToSelection(idx){
+  selection.push(idx);
+  wheelLetterEls()[idx].classList.add('sel');
+  document.getElementById('current-word').textContent = selection.map(i => level.letters[i]).join('').toUpperCase();
+  drawTether(null);
+}
+function clearSelection(){
+  selection = [];
+  wheelLetterEls().forEach(el => el.classList.remove('sel'));
+  document.getElementById('current-word').textContent = '';
+  const svg = document.getElementById('wheel-svg');
+  svg.innerHTML = '';
+}
+function drawTether(){
+  const svg = document.getElementById('wheel-svg');
+  svg.innerHTML = '';
+  if (selection.length < 2) return;
+  const els = wheelLetterEls();
+  let d = '';
+  selection.forEach((idx, i) => {
+    const style = els[idx].style;
+    const x = parseFloat(style.left), y = parseFloat(style.top);
+    d += (i === 0 ? 'M' : 'L') + x + ',' + y + ' ';
+  });
+  const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.setAttribute('d', d.trim());
+  path.setAttribute('stroke', '#f0c761');
+  path.setAttribute('stroke-width', '5');
+  path.setAttribute('stroke-linecap', 'round');
+  path.setAttribute('fill', 'none');
+  path.setAttribute('opacity', '0.85');
+  svg.appendChild(path);
+}
+function submitSelection(){
+  const word = selection.map(i => level.letters[i]).join('').toLowerCase();
+  clearSelection();
+  if (word.length < 3) return;
+  if (!level.allValid.has(word)){
+    sfxWrong();
+    showToast('Not a word');
+    return;
+  }
+  const gridMatch = level.gridWords.find(g => g.word === word);
+  if (gridMatch){
+    if (foundGrid.has(word)){ sfxAlreadyFound(); showToast('Already found'); return; }
+    foundGrid.add(word);
+    const coins = pointsForWord(word, false);
+    score += coins; // pending — only lands in the wallet if the level is completed
+    revealGridWord(gridMatch);
+    updateProgressBar();
+    sfxPoint();
+    showToast(word.toUpperCase() + '! +' + coins + ' coins');
+    checkLevelComplete();
+    saveGame();
+    return;
+  }
+  if (foundBonus.has(word)){ sfxAlreadyFound(); showToast('Already found'); return; }
+  foundBonus.add(word);
+  const coins = pointsForWord(word, true);
+  score += coins; // pending — only lands in the wallet if the level is completed
+  renderBonusStrip();
+  updateProgressBar();
+  sfxPoint();
+  showToast('+Bonus: ' + word.toUpperCase() + ' +' + coins + ' coins');
+  saveGame();
+}
+function revealGridWord(g){
+  for (let i = 0; i < g.word.length; i++){
+    const r = g.dir === 'V' ? g.row + i : g.row;
+    const c = g.dir === 'H' ? g.col + i : g.col;
+    const key = r + '_' + c;
+    level.cellMap[key].found = true;
+    const cellEl = document.getElementById('cell-' + key);
+    if (cellEl) cellEl.classList.add('found');
+  }
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 900);
+}
+function shuffleWheel(){
+  const rng = Math.random;
+  for (let i = level.letters.length - 1; i > 0; i--){
+    const j = Math.floor(rng() * (i + 1));
+    [level.letters[i], level.letters[j]] = [level.letters[j], level.letters[i]];
+  }
+  renderWheel();
+}
+function cellKeysForWord(g){
+  const keys = [];
+  for (let i = 0; i < g.word.length; i++){
+    const r = g.dir === 'V' ? g.row + i : g.row;
+    const c = g.dir === 'H' ? g.col + i : g.col;
+    keys.push(r + '_' + c);
+  }
+  return keys;
+}
+function revealOneHintLetter(){
+  const candidates = [];
+  for (const g of level.gridWords){
+    if (foundGrid.has(g.word)) continue;
+    for (const key of cellKeysForWord(g)){
+      if (!level.cellMap[key].found) candidates.push(key);
+    }
+  }
+  if (!candidates.length) return false;
+  const key = candidates[Math.floor(Math.random() * candidates.length)];
+  level.cellMap[key].found = true;
+  const cellEl = document.getElementById('cell-' + key);
+  if (cellEl) cellEl.classList.add('found');
+  sfxAlreadyFound();
+  showToast('Hint: revealed a letter');
+  for (const g of level.gridWords){
+    if (foundGrid.has(g.word)) continue;
+    if (cellKeysForWord(g).every(k => level.cellMap[k].found)) foundGrid.add(g.word);
+  }
+  updateProgressBar();
+  checkLevelComplete();
+  saveGame();
+  return true;
+}
+function useHint(){
+  const anyUnrevealed = level.gridWords.some(g => !foundGrid.has(g.word) &&
+    cellKeysForWord(g).some(k => !level.cellMap[k].found));
+  if (!anyUnrevealed){ showToast('No hints needed'); return; }
+
+  if (hintsLeft > 0){
+    hintsLeft--;
+    updateHintButton();
+    revealOneHintLetter();
+    return;
+  }
+  if (progress.coins >= HINT_COST){
+    if (!confirm('Buy 1 hint for ' + HINT_COST + ' coins?')) return;
+    progress.coins -= HINT_COST;
+    updateHintButton();
+    revealOneHintLetter();
+    saveGame();
+    return;
+  }
+  // out of free hints and can't afford one — offer a rewarded ad instead
+  watchAdForHint();
+}
+function watchAdForHint(){
+  if (!navigator.onLine){
+    showToast('Watching ads needs an internet connection');
+    return;
+  }
+  showRewardedAd(() => {
+    revealOneHintLetter();
+  });
+}
+function checkLevelComplete(){
+  if (foundGrid.size < totalGridWords()) return;
+  const bonusTotal = level.bonusWords.length;
+  const bonusFound = foundBonus.size;
+  let stars = 1;
+  if (bonusTotal > 0){
+    const ratio = bonusFound / bonusTotal;
+    if (ratio >= 0.999) stars = 3;
+    else if (ratio >= 0.5) stars = 2;
+  } else {
+    stars = 3;
+  }
+  if (level.isDaily){
+    progress.dailyCompletedDates.add(level.dateNum);
+  } else {
+    progress.stars[level.level] = Math.max(progress.stars[level.level] || 0, stars);
+    progress.unlockedLevel = Math.max(progress.unlockedLevel, level.level + 1);
+  }
+  progress.coins += score; // coins earned this attempt only land in the wallet on completion
+  progress.roundsSinceAd++;
+  if (progress.roundsSinceAd >= 2){
+    pendingInterstitial = true;
+    progress.roundsSinceAd = 0;
+  }
+  updateProgressBar();
+  saveGame();
+  setTimeout(() => showComplete(stars, bonusFound, bonusTotal), 500);
+}
+function showComplete(stars, bonusFound, bonusTotal){
+  sfxComplete();
+  document.getElementById('complete-title').textContent = level.isDaily ? 'Daily Challenge Cleared' : ('Level ' + level.level);
+  const litStars = '&#9733;'.repeat(stars) + '&#9734;'.repeat(3 - stars);
+  document.getElementById('complete-stars').innerHTML = litStars;
+  document.getElementById('complete-stats').textContent =
+    `${totalGridWords()}/${totalGridWords()} words · ${bonusFound}/${bonusTotal} bonus words · +${score} coins earned`;
+  const primary = document.getElementById('complete-primary-btn');
+  const secondary = document.getElementById('complete-secondary-btn');
+  if (level.isDaily){
+    primary.textContent = 'Back to Menu';
+    primary.onclick = () => {
+      document.getElementById('overlay-complete').classList.remove('show');
+      showInterstitialThen(exitGame);
+    };
+    secondary.style.display = 'none';
+  } else {
+    primary.textContent = 'Next Level';
+    primary.onclick = () => {
+      document.getElementById('overlay-complete').classList.remove('show');
+      showInterstitialThen(nextLevel);
+    };
+    secondary.style.display = '';
+    secondary.onclick = () => {
+      document.getElementById('overlay-complete').classList.remove('show');
+      showInterstitialThen(closeCompleteToSelect);
+    };
+  }
+  document.getElementById('overlay-complete').classList.add('show');
+}
+function nextLevel(){
+  progress.currentLevel = Math.min(TOTAL_LEVELS, level.level + 1);
+  loadLevel(progress.currentLevel);
+}
+function closeCompleteToSelect(){
+  openPacks(tierIndexForLevel(level.level));
+}
+
+/* ---------------- boot ---------------- */
+window.addEventListener('resize', () => {
+  if (level && document.getElementById('screen-game').classList.contains('active')) renderGrid();
+});
+window.addEventListener('beforeunload', saveGame);
+loadGame();
+refreshMenu();
+updateOnlineState();
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {
+      // offline caching just won't be available — game still plays fine online
+    });
+  });
+}
+</script>
+</body>
+</html>
